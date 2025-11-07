@@ -1,0 +1,31 @@
+# Clean requirements for TXDOT Asset Management - Traffic Light & Sign Detection
+# Tested and working versions
+
+# Core FastAPI
+fastapi==0.116.1
+uvicorn==0.35.0
+python-multipart==0.0.20
+
+# Image processing
+opencv-python==4.8.1.78
+pillow==11.3.0
+
+# Machine Learning - Compatible versions
+numpy==1.26.4
+torch==2.2.2
+torchvision==0.17.2
+ultralytics==8.3.186
+
+# Cloud storage (optional - for GCS model downloads)
+google-cloud-storage==2.18.2
+
+# Additional dependencies
+pydantic==2.11.7
+starlette==0.47.3
+
+
+
+
+
+
+

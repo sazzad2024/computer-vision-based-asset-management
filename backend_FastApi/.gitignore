@@ -1,0 +1,13 @@
+# FastAPI specific exclusions
+# (Most exclusions are handled by the global .gitignore)
+
+# Virtual environments (if created locally)
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# FastAPI specific test files
+test_*.py
+*_test.py
