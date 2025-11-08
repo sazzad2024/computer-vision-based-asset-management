@@ -62,5 +62,10 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       - name: Deploy Kubernetes manifests
-        run: kubectl apply -f ${{ env.K8S_MANIFEST_DIRECTORY }}
+        run: |
+          kubectl apply -f ${K8S_MANIFEST_DIRECTORY}/namespace.yaml
+          kubectl apply -f ${K8S_MANIFEST_DIRECTORY}/configmap-backends.yaml
+          kubectl apply -f ${K8S_MANIFEST_DIRECTORY}/fastapi.yaml
+          kubectl apply -f ${K8S_MANIFEST_DIRECTORY}/node-api.yaml
+          kubectl apply -f ${K8S_MANIFEST_DIRECTORY}/frontend.yaml
 
