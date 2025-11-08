@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 
 const assetRoutes = require('./routes/assetRoutes');
-const imageRoutes = require('./routes/imageRoutes');
 
 const app = express();
 
@@ -29,8 +28,6 @@ if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
 // API routes
 app.use('/api/assets', assetRoutes);
-
-app.use('/api/image', imageRoutes);
 
 // Also serve the output images as static files
 app.use('/output', express.static(path.join(__dirname, 'output')));
