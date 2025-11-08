@@ -1,0 +1,66 @@
+name: Deploy Infra and App
+
+on:
+  workflow_dispatch:
+
+env:
+  TERRAFORM_DIRECTORY: infra/terraform/aks
+  K8S_MANIFEST_DIRECTORY: infra/k8s
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Export Terraform environment variables
+        run: |
+          cat <<'EOF' > creds.json
+          ${{ secrets.AZURE_CREDENTIALS }}
+          EOF
+          echo "ARM_CLIENT_ID=$(jq -r .clientId creds.json)" >> "$GITHUB_ENV"
+          echo "ARM_CLIENT_SECRET=$(jq -r .clientSecret creds.json)" >> "$GITHUB_ENV"
+          echo "ARM_SUBSCRIPTION_ID=$(jq -r .subscriptionId creds.json)" >> "$GITHUB_ENV"
+          echo "ARM_TENANT_ID=$(jq -r .tenantId creds.json)" >> "$GITHUB_ENV"
+          echo "ARM_ACCESS_KEY=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}" >> "$GITHUB_ENV"
+          rm creds.json
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.5
+
+      - name: Terraform init
+        working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply
+        if: success()
+        working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Export kubeconfig
+        working-directory: ${{ env.TERRAFORM_DIRECTORY }}
+        run: |
+          terraform output -raw kube_config > kubeconfig
+          echo "KUBECONFIG=${PWD}/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Deploy Kubernetes manifests
+        run: kubectl apply -f ${{ env.K8S_MANIFEST_DIRECTORY }}
+
