@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: detection-api
+  namespace: txdot-dev
+  labels:
+    app: detection-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: detection-api
+  template:
+    metadata:
+      labels:
+        app: detection-api
+    spec:
+      containers:
+        - name: detection-api
+          image: txdotdevacr.azurecr.io/backend-fastapi:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: backend-env
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+      nodeSelector:
+        "kubernetes.io/os": linux
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: detection-api
+  namespace: txdot-dev
+spec:
+  selector:
+    app: detection-api
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+

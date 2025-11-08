@@ -1,0 +1,74 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "backend_FastApi/**"
+      - "backend_NodeApi/**"
+      - "frontend/**"
+      - ".github/workflows/build-and-push.yml"
+  workflow_dispatch:
+
+env:
+  ACR_NAME: txdotdevacr
+  ACR_LOGIN_SERVER: txdotdevacr.azurecr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Acquire ACR refresh token
+        id: acr-token
+        run: |
+          TOKEN=$(az acr login --name "${ACR_NAME}" --expose-token --output tsv --query accessToken)
+          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker login to ACR
+        run: |
+          echo "${{ steps.acr-token.outputs.token }}" | docker login "${ACR_LOGIN_SERVER}" --username 00000000-0000-0000-0000-000000000000 --password-stdin
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push detection API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend_FastApi
+          push: true
+          tags: |
+            txdotdevacr.azurecr.io/backend-fastapi:dev
+
+      - name: Build and push asset rating API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend_NodeApi
+          push: true
+          tags: |
+            txdotdevacr.azurecr.io/backend-node:dev
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            txdotdevacr.azurecr.io/frontend:dev
+          build-args: |
+            REACT_APP_API_BASE=http://detection-api.txdot-dev.svc.cluster.local
+            REACT_APP_ASSET_RATING_API_BASE=http://asset-rating-api.txdot-dev.svc.cluster.local
+

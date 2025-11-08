@@ -5,7 +5,9 @@ COPY package.json package-lock.json* ./
 RUN npm ci || npm install
 COPY . .
 ARG REACT_APP_API_BASE=""
+ARG REACT_APP_ASSET_RATING_API_BASE=""
 ENV REACT_APP_API_BASE=$REACT_APP_API_BASE
+ENV REACT_APP_ASSET_RATING_API_BASE=$REACT_APP_ASSET_RATING_API_BASE
 RUN npm run build
 
 # Serve static with nginx

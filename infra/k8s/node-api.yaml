@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asset-rating-api
+  namespace: txdot-dev
+  labels:
+    app: asset-rating-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asset-rating-api
+  template:
+    metadata:
+      labels:
+        app: asset-rating-api
+    spec:
+      containers:
+        - name: asset-rating-api
+          image: txdotdevacr.azurecr.io/backend-node:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: backend-env
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 25
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: temp-storage
+              mountPath: /app/output
+            - name: temp-storage
+              mountPath: /app/uploads
+      volumes:
+        - name: temp-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: asset-rating-api
+  namespace: txdot-dev
+spec:
+  selector:
+    app: asset-rating-api
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: ClusterIP
+
+

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-env
+  namespace: txdot-dev
+data:
+  CORS_ORIGIN: "*"
+  CORS_ORIGINS: "*"
+  PUBLIC_BASE_URL: ""
+
+

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asset-frontend
+  namespace: txdot-dev
+  labels:
+    app: asset-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: asset-frontend
+  template:
+    metadata:
+      labels:
+        app: asset-frontend
+    spec:
+      containers:
+        - name: asset-frontend
+          image: txdotdevacr.azurecr.io/frontend:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: asset-frontend
+  namespace: txdot-dev
+  labels:
+    app: asset-frontend
+spec:
+  selector:
+    app: asset-frontend
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+
+
